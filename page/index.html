@@ -17,16 +17,57 @@ cuts[2] = 4.0;
 
 var mouse_status = "hover";
 
+var choice_cut = -1; //the cut thats being hovered over
+var choice_point = -1; // the point thats being hovered over
+var choice_side = -1; // which side that point is on, -1=left, 1=right
+                    
+var cut_bounds = {
+    "above":-1,
+    "below":-1
+};
+                    
+var point_bounds = {
+    "above":-1,
+    "below":-1,
+    "radmin":-1,
+    "radmax":-1
+};
+
+var candidate_point = null;
+
+var candidate_cut = null;
+
 function setup(){
     var canvas = document.getElementById("usp");
     var mouseX,mouseY;
     
+    canvas.addEventListener('keydown', function(evt) {
+        if (evt.keyCode == 88){
+            // x was pressed. delete the thing being held
+            if (mouse_status == "holding_point"){
+                delete_point();
+            } else if (mouse_status == "holding_cut"){
+                delete_cut();
+            }
+        }
+        draw(mouseX,mouseY);
+    }, false);
+    
     canvas.addEventListener('mousemove', function(evt) {
+        canvas.focus();
         var rect = canvas.getBoundingClientRect(), root = document.documentElement;
         // relative mouse position
         //console.log(rect.top, rect.left)
         mouseX = evt.clientX - rect.left;// - root.scrollTop;
         mouseY = evt.clientY - rect.top;// - root.scrollLeft;
+        if (mouse_status=="hover"){
+            hover_cuts(mouseX,mouseY);
+            hover_points(mouseX,mouseY);
+        } else if (mouse_status=="holding_cut"){
+            move_held_cut(mouseX,mouseY);
+        } else if (mouse_status=="holding_point"){
+            move_held_point(mouseX,mouseY);
+        }
         draw(mouseX,mouseY);
     }, false);
     
@@ -39,15 +80,49 @@ function setup(){
 
         if (mouse_status == "hover"){
             if (mouseX < 20){
-                mouse_status = "holding_cut"
+                if (choice_cut != -1){
+                    cut_bounds = {
+                        "above":cuts[choice_cut+1],
+                        "below":cuts[choice_cut-1]
+                    };
+                    mouse_status = "holding_cut";
+                    console.log("choice_cut ",choice_cut);
+                } else if (candidate_cut){
+                    choice_cut = candidate_cut['above'];
+                    cuts.splice(choice_cut, 0, candidate_cut['height']);
+                    cut_bounds = {
+                        "above":cuts[choice_cut+1],
+                        "below":cuts[choice_cut-1]
+                    };
+                    candidate_cut = null;
+                    mouse_status = "holding_cut"
+                }
             } else {
-                mouse_status = "holding_point"
+                if (choice_point != -1){
+                    point_bounds = {
+                        "above": path[choice_point+1][0],
+                        "below": path[choice_point-1][0],
+                        "radmin": 0.0,
+                        "radmax": 2.0
+                    };
+                    mouse_status = "holding_point"
+                } else if (candidate_point) {
+                    // create a new point and splice it into the path
+                    choice_point = candidate_point['above'];
+                    path.splice(choice_point, 0, [candidate_point['height'], candidate_point['rad']]);
+                    point_bounds = {
+                        "above": path[choice_point+1][0],
+                        "below": path[choice_point-1][0],
+                        "radmin": 0.0,
+                        "radmax": 2.0
+                    };
+                    candidate_point = null
+                    mouse_status = "holding_point"
+                }
             }
         } else if (mouse_status == "holding_cut") {
-            // apply cut
             mouse_status = "hover";
         } else if (mouse_status == "holding_point") {
-            // apply new point
             mouse_status = "hover";
         }
         console.log(mouse_status)
@@ -58,6 +133,134 @@ function setup(){
     draw(-100,0);
 }
 
+function delete_point(){
+    path.splice(choice_point,1);
+    choice_point=-1;
+    mouse_status="hover"
+}
+
+function delete_cut(){
+    cuts.splice(choice_cut,1);
+    choice_cut=-1;
+    mouse_status="hover"
+}
+
+function hover_cuts(mouseX,mouseY){
+    choice_cut = -1
+    var closest = -1;
+    var disclo = 9999;
+    candidate_cut = null;
+    which_above = null
+    if (mouse_status=="hover" && mouseX<20){
+        for(var i=0; i<cuts.length; i++){
+            var cvco = fco_to_cvco(0, cuts[i]);
+            if (which_above==null && cvco.y<mouseY){
+                which_above = i;
+            }
+            // if not first or last cut (special)
+            if (i!=0 && i!=(cuts.length-1)){
+                var dy = Math.abs(mouseY-cvco.y);
+                if (dy<10){
+                    if (dy < disclo){
+                        disclo = dy;
+                        closest = i;
+                    }
+                }
+            }
+        }
+        choice_cut = closest;
+        if (choice_cut == -1){
+            tgt = cvco_to_fco(mouseX,mouseY);
+            if (tgt['height'] < cuts[cuts.length-1]){
+                candidate_cut = {
+                    'height':tgt['height'],
+                    'above':which_above
+                };
+            }
+        }
+    }
+}
+
+function hover_points(mouseX,mouseY){
+    // figure out which point we are hovering closest to
+    choice_point = -1
+    var closest = -1;
+    var disclo = 9999;
+    var clomu = 1; // which side was the closest one detected on
+    // destroy candidate
+    candidate_point = null;
+    if (mouseX>20){
+        for(var i=1; i<path.length; i++){
+            for(var mu=1; mu>=-1; mu-=2){
+                co = fco_to_cvco(mu*path[i][1], path[i][0]);
+                kd = Math.sqrt( Math.pow(mouseX-co.x,2) + Math.pow(mouseY-co.y,2) );
+                if (kd<12 && kd < disclo){
+                    disclo = kd;
+                    closest = i;
+                    clomu = mu;
+                }
+            }
+
+            var cvco = fco_to_cvco(path[i][1], path[i][0]);
+            if (cvco.y < mouseY){
+                // hovering above pco and below cvco
+                var pco = fco_to_cvco(path[i-1][1], path[i-1][0]);
+                var true_xpos = (mouseY - cvco.y) / (cvco.y - pco.y) * (cvco.x - pco.x) + cvco.x
+                // is it close enough?
+                left_d = Math.abs(true_xpos-mouseX)
+                //other side
+                var tgt = cvco_to_fco(true_xpos,mouseY);
+                right_d = Math.abs(fco_to_cvco(-1*tgt.rad, tgt.height)['x'] - mouseX);
+                
+                if (left_d < 25 || right_d < 25 ){
+                    // create candidate
+                    candidate_point = {
+                        "above":i,
+                        "below":i-1,
+                        "rad":tgt['rad'],
+                        "height":tgt['height']
+                    }
+                }
+                break;
+            }
+
+        }
+    }
+    choice_point = closest;
+    choice_side = clomu;
+    if (choice_point != -1){
+        candidate_point = null;
+    }
+}
+
+function move_held_cut(mouseX,mouseY){
+    console.log('move held cut',choice_cut)
+    if (choice_cut != -1){
+        var margin = 0.01;
+        var tgt = cvco_to_fco(mouseX, mouseY);
+        if ( (cut_bounds["above"]-margin)>tgt.height && tgt.height>(cut_bounds["below"]+margin) ){
+            cuts[choice_cut] = tgt.height;
+        }
+    }
+}
+
+function move_held_point(mouseX,mouseY){
+    if (choice_point != -1){
+        console.log('moving point',choice_point)
+        var margin = 0.01;
+        var tgt = cvco_to_fco(mouseX, mouseY);
+        tgt['rad'] = Math.abs(tgt['rad']);
+        if (
+            (tgt['rad'] < point_bounds['radmax']   - margin) &&
+            (tgt['rad'] > point_bounds['radmin']   + margin) &&
+            (tgt['height'] < point_bounds['above'] - margin) &&
+            (tgt['height'] > point_bounds['below'] + margin) )
+        {
+            path[choice_point][1] = tgt['rad'];
+            path[choice_point][0] = tgt['height'];
+        }
+    }
+}
 
 function fco_to_cvco(rad,height){
     return {
@@ -113,33 +316,30 @@ function draw(mouseX,mouseY){
         labelVertGuide(ctx, -3, '3m')
         labelVertGuide(ctx, 3, '3m')
 
-        // left profile
-        ctx.beginPath();
-        ctx.strokeStyle = "rgb(0,0,0)";
-        for(var i=0; i<path.length; i++){
-            var np = path[i];
-            var cvco = fco_to_cvco(np[1], np[0]);
-            if (i==0){
-                ctx.moveTo(cvco.x, cvco.y);
-            } else {
-                ctx.lineTo(cvco.x, cvco.y);
+        // fairing profile line segments
+        for (var mu=1; mu>=-1; mu-=2){
+            ctx.beginPath();
+            ctx.strokeStyle = "rgb(0,0,0)";
+            for(var i=0; i<path.length; i++){
+                var np = path[i];
+                var cvco = fco_to_cvco(mu*np[1], np[0]);
+                if (i==0){
+                    ctx.moveTo(cvco.x, cvco.y);
+                } else {
+                    ctx.lineTo(cvco.x, cvco.y);
+                }
             }
+            ctx.stroke();
         }
-        ctx.stroke();
 
-        // right profile
-        ctx.beginPath();
-        ctx.strokeStyle = "rgb(0,0,0)";
-        for(var i=0; i<path.length; i++){
-            var np = path[i];
-            var cvco = fco_to_cvco(-1*np[1], np[0]);
-            if (i==0){
-                ctx.moveTo(cvco.x, cvco.y);
-            } else {
-                ctx.lineTo(cvco.x, cvco.y);
-            }
+        if (choice_point != -1){
+            cp = path[choice_point];
+            co = fco_to_cvco(choice_side*cp[1], cp[0]);
+            ctx.beginPath();
+            ctx.arc(co.x, co.y, 4, 0, 2 * Math.PI, false);
+            ctx.strokeStyle = "rgb(0, 0, 0)";
+            ctx.stroke();
         }
-        ctx.stroke();
 
         // existing cuts
         for(var i=0; i<cuts.length; i++){
@@ -147,10 +347,8 @@ function draw(mouseX,mouseY){
             // plain clor
             ctx.strokeStyle = "rgb(200,45,0)";
             // if not first or last cut (special)
-            if (!(i==0) && !(i==(cuts.length-1))){
-                if (Math.abs(mouseY-cvco.y)<10 && mouse_status=="hover" && mouseX<20){
-                    ctx.strokeStyle = "rgb(255,255,0)";
-                }
+            if (i == choice_cut){
+                ctx.strokeStyle = "rgb(255,255,0)";
             }
             ctx.beginPath();
             ctx.moveTo(0, cvco.y);
@@ -158,39 +356,30 @@ function draw(mouseX,mouseY){
             ctx.stroke();
         }
 
-        if (mouse_status == "hover"){
-            if (mouseX>20){
-                // hover main editor area
-                for(var i=1; i<path.length; i++){
-                    var np = path[i];
-                    var cvco = fco_to_cvco(np[1], np[0]);
-                    if (cvco.y < mouseY){
-                        var pco = fco_to_cvco(path[i-1][1], path[i-1][0]);
-                        // hovering above pco and below cvco
-                        var true_xpos = (mouseY - cvco.y) / (cvco.y - pco.y) * (cvco.x - pco.x) + cvco.x
-                        // mouse dot
-                        ctx.beginPath();
-                        ctx.arc(true_xpos, mouseY, 6, 0, 2 * Math.PI, false);
-                        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-                        ctx.fill();
-                        // other side
-                        var fairing_co = cvco_to_fco(true_xpos, mouseY);
-                        var canvas_co = fco_to_cvco(-1*fairing_co.rad, fairing_co.height);
-                        ctx.beginPath();
-                        ctx.arc(canvas_co.x, mouseY, 6, 0, 2 * Math.PI, false);
-                        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-                        ctx.fill();
-                        break;
-                    }
-                }
-            } else {
-                // hover orange cut box
-                //ctx.strokeStyle = "rgb(255,255,0)";
-                //ctx.beginPath();
-                //ctx.moveTo(0, mouseY);
-                //ctx.lineTo(800, mouseY);
-                //ctx.stroke();
-            }
+        
+        if (candidate_point){
+            cgan = fco_to_cvco( candidate_point['rad'], candidate_point['height'] );
+            // mouse dot
+            ctx.beginPath();
+            ctx.arc(cgan.x, cgan.y, 4, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fill();
+            // other side
+            var fairing_co = cvco_to_fco(cgan.x, cgan.y);
+            var canvas_co = fco_to_cvco(-1*fairing_co.rad, fairing_co.height);
+            ctx.beginPath();
+            ctx.arc(canvas_co.x, canvas_co.y, 4, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fill();
+        }
+
+        if (candidate_cut){
+            cgan = fco_to_cvco(0,candidate_cut['height']);
+            ctx.strokeStyle = "rgb(100,0,0)";
+            ctx.beginPath();
+            ctx.moveTo(0, cgan.y);
+            ctx.lineTo(20, cgan.y);
+            ctx.stroke();
         }
     }
 }
@@ -232,7 +421,7 @@ div.clear {
     <body onLoad="setup();">
         <div style="width: 100%; height: 850px; padding: 10px; background-color: rgb(210,210,210)">
             <div class="left">
-                Fairing<br>Factory<br>
+                <b>Fairing<br>Factory</b><br>
                 <br>
                 <br>
                 <small>
@@ -247,7 +436,7 @@ div.clear {
                     </ol>
                 </small>
             </div>
-            <canvas id="usp" width=800 height=800></canvas>
+            <canvas id="usp" width=800 height=800 tabindex=1></canvas>
             <div class="right">
                 Bla Bla explanation
             </div>
