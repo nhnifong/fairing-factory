@@ -17,7 +17,9 @@ def partflags(n):
 
 # consume fairing kit orders
 while True:
-    order = json.laods(r.brpop('fairing-kit-orders'))
+    b = r.brpop('fairing-kit-orders')
+    print repr(b)
+    order = json.loads(b[1])
     kitid = order['kitid']
 
     # create new kit directory from kitid
@@ -25,9 +27,9 @@ while True:
     os.mkdir(os.path.join(kits_data,kitdir))
     
     # copy in the appropriate base part
-    basepart = '_'.join('ffkits', order['base-size'], order['texture'])
+    basepart = '_'.join(['ffkits', order['base-size'], order['texture']])
     base_part_path = os.path.join(bases,basepart)
-    shutil.copytree(base_part_path, os.path.join(kitdir,basepart))
+    shutil.copytree(base_part_path, os.path.join(kits_data,kitdir,basepart))
     
     # create a kit tracker
     kittracker = {
@@ -36,13 +38,15 @@ while True:
         'time-submitted':order['time-submitted'],
         'parts-finished':partflags(len(order['sections']))
         }
-    r.set('kit-trackers:'+kitid, json.dumps(kittracker))
-    r.expire('kit-trackers:'+kitid, 60*60*24)
+    r.set('kit-trackers:'+str(kitid), json.dumps(kittracker))
+    r.expire('kit-trackers:'+str(kitid), 60*60*24)
 
     for i,section in enumerate(order['sections']):
         # create a new part directory for each part inside the kit directory
         partdir = 'ffkits_%s_section_%i' % (kitid,i)
-        os.mkdir(os.path.join(kitdir,partdir))
+        complete_path = os.path.join( kits_data, kitdir, partdir )
+        print complete_path
+        os.mkdir(complete_path)
 
         # create the part order
         partorder = {
