@@ -20,6 +20,8 @@
         ]
     }
 
+the json object clients post to the API look just like the above without the kitid and time-submitted keys
+
 #### part-orders
     {
         'kitid':   12345,  # the kit this part came from
