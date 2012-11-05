@@ -1,0 +1,446 @@
+<html>
+    <head>
+        <title>Faring Factory</title>
+        <script type="text/javascript">
+
+var path = new Array();
+// height, radius
+path[0] = [0.0,1.0];
+path[1] = [3.0,1.0];
+path[2] = [3.6,0.6];
+path[3] = [4.0,0.0];
+
+var cuts = new Array();
+cuts[0] = 0.0;
+cuts[1] = 2.0;
+cuts[2] = 4.0;
+
+var mouse_status = "hover";
+
+var choice_cut = -1; //the cut thats being hovered over
+var choice_point = -1; // the point thats being hovered over
+var choice_side = -1; // which side that point is on, -1=left, 1=right
+                    
+var cut_bounds = {
+    "above":-1,
+    "below":-1
+};
+                    
+var point_bounds = {
+    "above":-1,
+    "below":-1,
+    "radmin":-1,
+    "radmax":-1
+};
+
+var candidate_point = null;
+
+var candidate_cut = null;
+
+function setup(){
+    var canvas = document.getElementById("usp");
+    var mouseX,mouseY;
+    
+    canvas.addEventListener('keydown', function(evt) {
+        if (evt.keyCode == 88){
+            // x was pressed. delete the thing being held
+            if (mouse_status == "holding_point"){
+                delete_point();
+            } else if (mouse_status == "holding_cut"){
+                delete_cut();
+            }
+        }
+        draw(mouseX,mouseY);
+    }, false);
+    
+    canvas.addEventListener('mousemove', function(evt) {
+        canvas.focus();
+        var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+        // relative mouse position
+        //console.log(rect.top, rect.left)
+        mouseX = evt.clientX - rect.left;// - root.scrollTop;
+        mouseY = evt.clientY - rect.top;// - root.scrollLeft;
+        if (mouse_status=="hover"){
+            hover_cuts(mouseX,mouseY);
+            hover_points(mouseX,mouseY);
+        } else if (mouse_status=="holding_cut"){
+            move_held_cut(mouseX,mouseY);
+        } else if (mouse_status=="holding_point"){
+            move_held_point(mouseX,mouseY);
+        }
+        draw(mouseX,mouseY);
+    }, false);
+    
+    canvas.addEventListener('mouseup', function(evt) {
+        var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+        // relative mouse position
+        //console.log(rect.top, rect.left)
+        mouseX = evt.clientX - rect.left;// - root.scrollTop;
+        mouseY = evt.clientY - rect.top;// - root.scrollLeft;
+
+        if (mouse_status == "hover"){
+            if (mouseX < 20){
+                if (choice_cut != -1){
+                    cut_bounds = {
+                        "above":cuts[choice_cut+1],
+                        "below":cuts[choice_cut-1]
+                    };
+                    mouse_status = "holding_cut";
+                    console.log("choice_cut ",choice_cut);
+                } else if (candidate_cut){
+                    choice_cut = candidate_cut['above'];
+                    cuts.splice(choice_cut, 0, candidate_cut['height']);
+                    cut_bounds = {
+                        "above":cuts[choice_cut+1],
+                        "below":cuts[choice_cut-1]
+                    };
+                    candidate_cut = null;
+                    mouse_status = "holding_cut"
+                }
+            } else {
+                if (choice_point != -1){
+                    point_bounds = {
+                        "above": path[choice_point+1][0],
+                        "below": path[choice_point-1][0],
+                        "radmin": 0.0,
+                        "radmax": 2.0
+                    };
+                    mouse_status = "holding_point"
+                } else if (candidate_point) {
+                    // create a new point and splice it into the path
+                    choice_point = candidate_point['above'];
+                    path.splice(choice_point, 0, [candidate_point['height'], candidate_point['rad']]);
+                    point_bounds = {
+                        "above": path[choice_point+1][0],
+                        "below": path[choice_point-1][0],
+                        "radmin": 0.0,
+                        "radmax": 2.0
+                    };
+                    candidate_point = null
+                    mouse_status = "holding_point"
+                }
+            }
+        } else if (mouse_status == "holding_cut") {
+            mouse_status = "hover";
+        } else if (mouse_status == "holding_point") {
+            mouse_status = "hover";
+        }
+        console.log(mouse_status)
+        draw(mouseX,mouseY);
+    }, false);
+
+    
+    draw(-100,0);
+}
+
+function delete_point(){
+    path.splice(choice_point,1);
+    choice_point=-1;
+    mouse_status="hover"
+}
+
+function delete_cut(){
+    cuts.splice(choice_cut,1);
+    choice_cut=-1;
+    mouse_status="hover"
+}
+
+function hover_cuts(mouseX,mouseY){
+    choice_cut = -1
+    var closest = -1;
+    var disclo = 9999;
+    candidate_cut = null;
+    which_above = null
+    if (mouse_status=="hover" && mouseX<20){
+        for(var i=0; i<cuts.length; i++){
+            var cvco = fco_to_cvco(0, cuts[i]);
+            if (which_above==null && cvco.y<mouseY){
+                which_above = i;
+            }
+            // if not first or last cut (special)
+            if (i!=0 && i!=(cuts.length-1)){
+                var dy = Math.abs(mouseY-cvco.y);
+                if (dy<10){
+                    if (dy < disclo){
+                        disclo = dy;
+                        closest = i;
+                    }
+                }
+            }
+        }
+        choice_cut = closest;
+        if (choice_cut == -1){
+            tgt = cvco_to_fco(mouseX,mouseY);
+            if (tgt['height'] < cuts[cuts.length-1]){
+                candidate_cut = {
+                    'height':tgt['height'],
+                    'above':which_above
+                };
+            }
+        }
+    }
+}
+
+function hover_points(mouseX,mouseY){
+    // figure out which point we are hovering closest to
+    choice_point = -1
+    var closest = -1;
+    var disclo = 9999;
+    var clomu = 1; // which side was the closest one detected on
+    // destroy candidate
+    candidate_point = null;
+    if (mouseX>20){
+        for(var i=1; i<path.length; i++){
+            for(var mu=1; mu>=-1; mu-=2){
+                co = fco_to_cvco(mu*path[i][1], path[i][0]);
+                kd = Math.sqrt( Math.pow(mouseX-co.x,2) + Math.pow(mouseY-co.y,2) );
+                if (kd<12 && kd < disclo){
+                    disclo = kd;
+                    closest = i;
+                    clomu = mu;
+                }
+            }
+
+            var cvco = fco_to_cvco(path[i][1], path[i][0]);
+            if (cvco.y < mouseY){
+                // hovering above pco and below cvco
+                var pco = fco_to_cvco(path[i-1][1], path[i-1][0]);
+                var true_xpos = (mouseY - cvco.y) / (cvco.y - pco.y) * (cvco.x - pco.x) + cvco.x
+                // is it close enough?
+                left_d = Math.abs(true_xpos-mouseX)
+                //other side
+                var tgt = cvco_to_fco(true_xpos,mouseY);
+                right_d = Math.abs(fco_to_cvco(-1*tgt.rad, tgt.height)['x'] - mouseX);
+                
+                if (left_d < 25 || right_d < 25 ){
+                    // create candidate
+                    candidate_point = {
+                        "above":i,
+                        "below":i-1,
+                        "rad":tgt['rad'],
+                        "height":tgt['height']
+                    }
+                }
+                break;
+            }
+
+        }
+    }
+    choice_point = closest;
+    choice_side = clomu;
+    if (choice_point != -1){
+        candidate_point = null;
+    }
+}
+
+function move_held_cut(mouseX,mouseY){
+    console.log('move held cut',choice_cut)
+    if (choice_cut != -1){
+        var margin = 0.01;
+        var tgt = cvco_to_fco(mouseX, mouseY);
+        if ( (cut_bounds["above"]-margin)>tgt.height && tgt.height>(cut_bounds["below"]+margin) ){
+            cuts[choice_cut] = tgt.height;
+        }
+    }
+}
+
+function move_held_point(mouseX,mouseY){
+    if (choice_point != -1){
+        console.log('moving point',choice_point)
+        var margin = 0.01;
+        var tgt = cvco_to_fco(mouseX, mouseY);
+        tgt['rad'] = Math.abs(tgt['rad']);
+        if (
+            (tgt['rad'] < point_bounds['radmax']   - margin) &&
+            (tgt['rad'] > point_bounds['radmin']   + margin) &&
+            (tgt['height'] < point_bounds['above'] - margin) &&
+            (tgt['height'] > point_bounds['below'] + margin) )
+        {
+            path[choice_point][1] = tgt['rad'];
+            path[choice_point][0] = tgt['height'];
+        }
+    }
+}
+
+function fco_to_cvco(rad,height){
+    return {
+        'x': 390+rad*180,
+        'y': 800-height*180
+    };
+}
+
+function cvco_to_fco(cx,cy){
+    return {
+        'rad': (cx-390)/180,
+        'height': (800-cy)/180
+    };
+}
+
+function labelVertGuide(ctx, rad, str){
+    ctx.strokeStyle = "rgb(250,250,250)";
+    ctx.font = 'italic 12px Calibri';
+    ctx.fillStyle = "rgb(220,220,200)";
+    ctx.beginPath();
+    ptg = fco_to_cvco(rad,0)
+    x = ptg.x + 0.5
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 800);
+    ctx.stroke();
+    ctx.fillText(str, x+1.5, 10);
+}
+        
+function draw(mouseX,mouseY){
+    var canvas = document.getElementById("usp");
+    if (canvas.getContext){
+        var ctx = canvas.getContext("2d");
+
+        // width: 800, height: 800
+
+        ctx.fillStyle = "rgb(180,180,180)";
+        ctx.fillRect (0, 0, 800, 800);
+        
+        ctx.fillStyle = "rgb(212,95,0)";
+        ctx.fillRect (0, 0, 20, 800);
+        ctx.strokeStyle = "rgb(0,0,0)";
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(20, 800);
+        ctx.stroke();
+
+        // light 1m 2m 3m lines
+        labelVertGuide(ctx, 0, '0m')
+        labelVertGuide(ctx, -1, '1m')
+        labelVertGuide(ctx, 1, '1m')
+        labelVertGuide(ctx, -2, '2m')
+        labelVertGuide(ctx, 2, '2m')
+        labelVertGuide(ctx, -3, '3m')
+        labelVertGuide(ctx, 3, '3m')
+
+        // fairing profile line segments
+        for (var mu=1; mu>=-1; mu-=2){
+            ctx.beginPath();
+            ctx.strokeStyle = "rgb(0,0,0)";
+            for(var i=0; i<path.length; i++){
+                var np = path[i];
+                var cvco = fco_to_cvco(mu*np[1], np[0]);
+                if (i==0){
+                    ctx.moveTo(cvco.x, cvco.y);
+                } else {
+                    ctx.lineTo(cvco.x, cvco.y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        if (choice_point != -1){
+            cp = path[choice_point];
+            co = fco_to_cvco(choice_side*cp[1], cp[0]);
+            ctx.beginPath();
+            ctx.arc(co.x, co.y, 4, 0, 2 * Math.PI, false);
+            ctx.strokeStyle = "rgb(0, 0, 0)";
+            ctx.stroke();
+        }
+
+        // existing cuts
+        for(var i=0; i<cuts.length; i++){
+            var cvco = fco_to_cvco(0, cuts[i]);
+            // plain clor
+            ctx.strokeStyle = "rgb(200,45,0)";
+            // if not first or last cut (special)
+            if (i == choice_cut){
+                ctx.strokeStyle = "rgb(255,255,0)";
+            }
+            ctx.beginPath();
+            ctx.moveTo(0, cvco.y);
+            ctx.lineTo(800, cvco.y);
+            ctx.stroke();
+        }
+
+        
+        if (candidate_point){
+            cgan = fco_to_cvco( candidate_point['rad'], candidate_point['height'] );
+            // mouse dot
+            ctx.beginPath();
+            ctx.arc(cgan.x, cgan.y, 4, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fill();
+            // other side
+            var fairing_co = cvco_to_fco(cgan.x, cgan.y);
+            var canvas_co = fco_to_cvco(-1*fairing_co.rad, fairing_co.height);
+            ctx.beginPath();
+            ctx.arc(canvas_co.x, canvas_co.y, 4, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fill();
+        }
+
+        if (candidate_cut){
+            cgan = fco_to_cvco(0,candidate_cut['height']);
+            ctx.strokeStyle = "rgb(100,0,0)";
+            ctx.beginPath();
+            ctx.moveTo(0, cgan.y);
+            ctx.lineTo(20, cgan.y);
+            ctx.stroke();
+        }
+    }
+}
+        </script>
+        <style type="text/css">
+
+body {
+    font-family: "Arial", Helvetica, sans-serif;
+    font-size: 18pt;
+}
+        
+canvas {
+    border: 2px solid rgb(100,100,100);
+    float: left;
+}
+
+div.left {
+    width: 180px;
+    float: left;
+    padding: 8px;
+}
+
+div.right {
+    width: 380px;
+    float: left;
+    padding: 8px;
+}
+
+div.clear {
+    display: block;
+    clear: both;
+    height: 0px;
+    margin: 0px;
+    font-size: 1px;
+    line-height: 0;
+}
+        </style>
+    </head>
+    <body onLoad="setup();">
+        <div style="width: 100%; height: 850px; padding: 10px; background-color: rgb(210,210,210)">
+            <div class="left">
+                <b>Fairing<br>Factory</b><br>
+                <br>
+                <br>
+                <small>
+                    <ol>
+                        <li>Select a base size.</li>
+                        <br>
+                        <li>Place points along the outline of your fairing by clicking inside the editor area.</li>
+                        <br>
+                        <li>Cut your fairing into sections by clicking in the orange cut area.</li>
+                        <br>
+                        <li>Choose a texture for your kit.</li>
+                    </ol>
+                </small>
+            </div>
+            <canvas id="usp" width=800 height=800 tabindex=1></canvas>
+            <div class="right">
+                Bla Bla explanation
+            </div>
+            <div class="clear"></div>
+        </div>
+    </body>
+</html>
