@@ -1,0 +1,4 @@
+*.blend -diff
+*.png -diff
+*.xcf -diff
+*.mu -diff
