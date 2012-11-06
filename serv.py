@@ -5,6 +5,17 @@ import time
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "FairingFactory/0.2"
+    def do_OPTIONS( self ):
+        self.log_message( "Command: %s Path: %s Headers: %r"
+                          % ( self.command, self.path, self.headers.items() ) )
+        self.send_response( 200 )
+        self.send_header( "Access-Control-Allow-Origin", "*" )
+        self.send_header( "Access-Control-Allow-Methods", "POST, OPTIONS" )
+        self.send_header( "Access-Control-Max-Age", "1000" )
+        # something not working? find out what was in the header jquery send and add the field here.
+        self.send_header( "Access-Control-Allow-Headers", "origin, x-requested-with, content-type, accept" )
+        self.end_headers()
+
     def do_GET( self ):
         self.log_message( "Command: %s Path: %s Headers: %r"
                           % ( self.command, self.path, self.headers.items() ) )
