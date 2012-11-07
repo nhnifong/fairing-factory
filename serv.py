@@ -31,6 +31,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 
     def sendPage( self, contenttype, body ):
         self.send_response( 200 )
+        self.send_header( "Access-Control-Allow-Origin", "*" )
         self.send_header( "Content-type", contenttype )
         self.send_header( "Content-length", str(len(body)) )
         self.end_headers()
@@ -66,11 +67,12 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 for vert in profile:
                     assert type(vert) == list
                     assert len(vert) == 2
-                    assert type(vert[0]) == float
-                    assert type(vert[1]) == float
+                    assert type(vert[0]) in [float,int]
+                    assert type(vert[1]) in [float,int]
             sections = secp
-        except (KeyError,AssertionError) as e:
+        except (KeyError, AssertionError) as e:
             self.send_error(400,"JSON message you sent was improperly structured.\n%r\n%r\n" % (e, body))
+            self.send_header( "Access-Control-Allow-Origin", "*" )
             return
 
         # get a new kitid
