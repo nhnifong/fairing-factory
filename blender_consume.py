@@ -165,10 +165,16 @@ def execute(r):
     print(mid)
     bpy.data.objects['Cube'].scale = [0.2,1,mid*0.9]
     
+    rkey = 'kit-trackers:'+str(po['kitid'])
+    print("looking for "+rkey)
+    ktrack = json.loads(r.get(rkey).decode())
+    thiskit = ktrack['kitdir']
+
     # save the file in the desired folder
     part_dir = po['partdir']
-    kits_dir = '/Users/nhnifong/fairing-factory/data'
-    outpath = os.path.join( kits_dir, part_dir, 'original.blend' )
+    kits_dir = 'data'
+    outpath = os.path.join( kits_dir, thiskit, part_dir, 'original.blend' )
+    print(outpath)
     bpy.ops.wm.save_as_mainfile(filepath=outpath, check_existing=False)
 
 if __name__ == "__main__":

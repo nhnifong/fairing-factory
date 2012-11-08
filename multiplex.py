@@ -39,7 +39,7 @@ while True:
         'parts-finished':partflags(len(order['sections']))
         }
     r.set('kit-trackers:'+str(kitid), json.dumps(kittracker))
-    r.expire('kit-trackers:'+str(kitid), 60*60*24)
+    r.expire('kit-trackers:'+str(kitid), 60*60*24*7)
 
     for i,section in enumerate(order['sections']):
         # create a new part directory for each part inside the kit directory
