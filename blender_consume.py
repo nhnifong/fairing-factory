@@ -62,7 +62,7 @@ def add_fairing(profile):
             d_height = profile[t+1][0] - profile[t][0]
             d_radius = profile[t+1][1] - profile[t][1]
             section_size = sqrt(d_height**2 + (d_radius)**2)
-            if section_size > 0.2:
+            if section_size > 0.08:
                 che = min(border_y, section_size/2)
                 tf = [
                     ((i+1)/12, che),
@@ -86,7 +86,7 @@ def add_fairing(profile):
     #    [(1,0), (0.732051,0), (0,0)]
     #]
     
-    return vertices, faces, tex_faces
+    return vertices, faces, tex_faces, topnode, bottomnode
 
 
 def execute(r):
@@ -100,7 +100,7 @@ def execute(r):
     
     po = json.loads(res.decode())
         
-    verts_loc, faces, tex_faces = add_fairing(po['profile'])
+    verts_loc, faces, tex_faces, tnode, bnode = add_fairing(po['profile'])
     
     print('I made %i faces' % len(faces))
 
@@ -141,30 +141,35 @@ def execute(r):
 
     # add the mesh as an object into the scene with this utility module
     object_utils.object_data_add(bpy.context, mesh)
+    visible_mesh = bpy.context.selected_objects[0].name
     
     # add the soldify modifier
     bpy.ops.object.modifier_add(type='SOLIDIFY')
-    bpy.context.selected_objects[0].modifiers['Solidify'].thickness = 0.04
+    bpy.data.objects[visible_mesh].modifiers['Solidify'].thickness = 0.04
     # apply it
     bpy.ops.object.modifier_apply(modifier='Solidify')
     # add an edge split modifier
     bpy.ops.object.modifier_add(type='EDGE_SPLIT')
-    bpy.context.selected_objects[0].modifiers['EdgeSplit'].split_angle = 0.418879 #radians, 24 degrees
+    bpy.data.objects[visible_mesh].modifiers['EdgeSplit'].split_angle = 0.418879 #radians, 24 degrees
     # set smooth
     bpy.ops.object.shade_smooth()
     # apply it
     bpy.ops.object.modifier_apply(modifier='EdgeSplit')
     
     # move it to origin if thats not already where it is
-    bpy.context.selected_objects[0].location = [0,0,0]
+    bpy.data.objects[visible_mesh].location = [0,0,0]
     
     # now add the mesh collider
+    bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.mesh.primitive_cube_add()
     profile = po['profile']
     mid = abs(profile[0][0] - profile[-1][0]) / 2
     print(mid)
-    bpy.data.objects['Cube'].scale = [0.2,1,mid*0.9]
+    collider = bpy.context.selected_objects[0].name
+    bpy.data.objects[collider].scale = [0.2,1,mid*0.9]
+    bpy.ops.object.transform_apply(scale=True)
     
+    # retrieve kit tracker
     rkey = 'kit-trackers:'+str(po['kitid'])
     print("looking for "+rkey)
     ktrack = json.loads(r.get(rkey).decode())
@@ -173,9 +178,56 @@ def execute(r):
     # save the file in the desired folder
     part_dir = po['partdir']
     kits_dir = 'data'
-    outpath = os.path.join( kits_dir, thiskit, part_dir, 'original.blend' )
+    blendfilename = 'original_%i_%i.blend' % (po['kitid'], po['partid'])
+    outpath = os.path.join( kits_dir, thiskit, part_dir, blendfilename )
     print(outpath)
     bpy.ops.wm.save_as_mainfile(filepath=outpath, check_existing=False)
+    
+    #compute a mass for the part
+    totlen = 0
+    c,d = po['profile'][0]
+    for a,b in po['profile'][1:]:
+        totlen += sqrt((a-c)**2 + (b-d)**2)
+        c,d = a,b
+    mass = totlen * 0.05
+    
+    # write a part.cfg file in that folder
+    cfg_template = open('part.cfg').read()
+    cfg_template = cfg_template.replace('<KIT>', str(po['kitid']))
+    cfg_template = cfg_template.replace('<SECTION>', str(po['partid']))
+    cfg_template = cfg_template.replace('<MASS>', mass.__format__('0.4f'))
+    
+    # -X Z Y
+    # the slight offsets help to control which way the fairing is ejected, but I don't totally understand it.
+    cfg_template = cfg_template.replace('<NODE_TOP_X>', (-tnode[0]-0.000048).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_TOP_Y>', (tnode[2]+0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_TOP_Z>', (tnode[1]).__format__('0.6f'))
+    
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-tnode[0]-0.000048).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (tnode[2]-0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (tnode[1]).__format__('0.6f'))
+    
+    if po['capped']:
+        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '//')
+    else:
+        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', 's')
+        
+    cfg_outpath = os.path.join( kits_dir, thiskit, part_dir, 'part.cfg' )
+    fout = open(cfg_outpath, 'w')
+    fout.write(cfg_template)
+    fout.close()
+    
+    # write asset order into redis
+    asseto = {
+        'kitid': po['kitid'],
+        'partid': po['partid'],
+        'partdir': po['partdir'],
+        'blend-file': blendfilename,
+        'texture': po['texture'],
+        'collider-name': collider,
+        'vismesh-name': visible_mesh
+    }
+    r.lpush('asset-orders', asseto)
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)
