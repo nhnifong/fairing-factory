@@ -231,4 +231,5 @@ def execute(r):
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)
-    execute(rr)
+    while True:
+        execute(rr)
