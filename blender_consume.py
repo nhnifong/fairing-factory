@@ -6,7 +6,7 @@ from math import *
 import redis
 import json
 import os
-
+import time
 
 def add_fairing(profile):
     """
@@ -91,7 +91,7 @@ def add_fairing(profile):
 
 def execute(r):
     
-    res = r.rpop('part-orders')
+    res = r.brpop('part-orders')[1]
     if not res: return
     
     # remove prior parts

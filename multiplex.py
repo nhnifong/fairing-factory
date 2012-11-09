@@ -54,6 +54,7 @@ while True:
             'partid': i,
             'partdir': partdir,
             'profile': section['profile'],
-            'texture': order['texture']
+            'texture': order['texture'],
+            'capped': section['capped']
             }
         r.lpush('part-orders', json.dumps(partorder))
