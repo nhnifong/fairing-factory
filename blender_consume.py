@@ -92,6 +92,7 @@ def add_fairing(profile):
 def execute(r):
     
     res = r.brpop('part-orders')[1]
+
     if not res: return
     
     # remove prior parts
@@ -165,7 +166,8 @@ def execute(r):
     profile = po['profile']
     mid = abs(profile[0][0] - profile[-1][0]) / 2
     print(mid)
-    collider = bpy.context.selected_objects[0].name
+    collider = "node_collider"
+    bpy.context.selected_objects[0].name = collider
     bpy.data.objects[collider].scale = [0.2,1,mid*0.9]
     bpy.ops.object.transform_apply(scale=True)
     
@@ -178,10 +180,10 @@ def execute(r):
     # save the file in the desired folder
     part_dir = po['partdir']
     kits_dir = 'data'
-    blendfilename = 'original_%i_%i.blend' % (po['kitid'], po['partid'])
-    outpath = os.path.join( kits_dir, thiskit, part_dir, blendfilename )
+    daefilename = 'original_%i_%i.dae' % (po['kitid'], po['partid'])
+    outpath = os.path.join( kits_dir, thiskit, part_dir, daeilename )
     print(outpath)
-    bpy.ops.wm.save_as_mainfile(filepath=outpath, check_existing=False)
+    bpy.ops.wm.collada_export(filepath=outpath, check_existing=False)
     
     #compute a mass for the part
     totlen = 0
@@ -196,6 +198,8 @@ def execute(r):
     cfg_template = cfg_template.replace('<KIT>', str(po['kitid']))
     cfg_template = cfg_template.replace('<SECTION>', str(po['partid']))
     cfg_template = cfg_template.replace('<MASS>', mass.__format__('0.4f'))
+    cfg_template = cfg_template.replace('<DAE_FILE>', daefilename)
+    cfg_template = cfg_template.replace('<TEXTURE_FILE>', po['texture']+'.png')
     
     # -X Z Y
     # the slight offsets help to control which way the fairing is ejected, but I don't totally understand it.
@@ -218,16 +222,12 @@ def execute(r):
     fout.close()
     
     # write asset order into redis
-    asseto = {
+    areceipt = {
         'kitid': po['kitid'],
         'partid': po['partid'],
-        'partdir': po['partdir'],
-        'blend-file': blendfilename,
-        'texture': po['texture'],
-        'collider-name': collider,
-        'vismesh-name': visible_mesh
+        'partdir': po['partdir']
     }
-    r.lpush('asset-orders', asseto)
+    r.lpush('part-receipts', asseto)
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)
