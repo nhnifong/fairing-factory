@@ -6,7 +6,7 @@ from math import *
 import redis
 import json
 import os
-
+import time
 
 def add_fairing(profile):
     """
@@ -91,7 +91,8 @@ def add_fairing(profile):
 
 def execute(r):
     
-    res = r.brpop('part-orders')
+    res = r.brpop('part-orders')[1]
+
     if not res: return
     
     # remove prior parts
@@ -180,7 +181,7 @@ def execute(r):
     part_dir = po['partdir']
     kits_dir = 'data'
     daefilename = 'original_%i_%i.dae' % (po['kitid'], po['partid'])
-    outpath = os.path.join( kits_dir, thiskit, part_dir, daeilename )
+    outpath = os.path.join( kits_dir, thiskit, part_dir, daefilename )
     print(outpath)
     bpy.ops.wm.collada_export(filepath=outpath, check_existing=False)
     
@@ -220,13 +221,13 @@ def execute(r):
     fout.write(cfg_template)
     fout.close()
     
-    # write asset order into redis
-    areceipt = {
+    # write part receipt into redis
+    receipt = {
         'kitid': po['kitid'],
         'partid': po['partid'],
         'partdir': po['partdir']
     }
-    r.lpush('part-receipts', asseto)
+    r.lpush('part-receipts', json.dumps(receipt))
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)

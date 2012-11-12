@@ -48,12 +48,23 @@ while True:
         print complete_path
         os.mkdir(complete_path)
 
+        # create a mesh folder and a texture folder
+        os.mkdir(os.path.join(complete_path,'mesh'))
+        texdir = os.path.join(complete_path,'textures')
+        os.mkdir(texdir)
+        
+        # copy the texture in
+        otexdir = 'textures'
+        otexfile = os.path.join(otexdir, order['texture']+'.png')
+        shutil.copy(otexfile, texdir)
+
         # create the part order
         partorder = {
             'kitid': kitid,
             'partid': i,
             'partdir': partdir,
             'profile': section['profile'],
-            'texture': order['texture']
+            'texture': order['texture'],
+            'capped': section['capped']
             }
         r.lpush('part-orders', json.dumps(partorder))
