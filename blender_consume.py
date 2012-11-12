@@ -21,12 +21,13 @@ def add_fairing(profile):
     topnode = None
     
     mid = (profile[0][0] + profile[-1][0]) / 2
+    avgradius = (profile[0][1] + profile[-1][1]) / 2
     
     for v,row in enumerate(profile):
         height = row[0]
         radius = row[1]
         ket = 13
-        center = (1.0, 0.0, 0.0)
+        center = (avgradius, 0.0, 0.0)
         # create a semicircle centered at (1,0,0) and 
         for a,angle in enumerate([(j/(ket-1))*pi for j in range(ket)]):
                 point = (-sin(angle)*radius+1,
@@ -165,10 +166,11 @@ def execute(r):
     bpy.ops.mesh.primitive_cube_add()
     profile = po['profile']
     mid = abs(profile[0][0] - profile[-1][0]) / 2
+    avgradius = (profile[0][1] + profile[-1][1]) / 2
     print(mid)
     collider = "node_collider"
     bpy.context.selected_objects[0].name = collider
-    bpy.data.objects[collider].scale = [0.2,1,mid*0.9]
+    bpy.data.objects[collider].scale = [0.2,avgradius,mid*0.9]
     bpy.ops.object.transform_apply(scale=True)
     
     # retrieve kit tracker
