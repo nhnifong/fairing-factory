@@ -227,7 +227,7 @@ def execute(r):
         'partid': po['partid'],
         'partdir': po['partdir']
     }
-    r.lpush('part-receipts', receipt)
+    r.lpush('part-receipts', json.dumps(receipt))
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)
