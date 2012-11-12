@@ -102,7 +102,7 @@ def execute(r):
     
     po = json.loads(res.decode())
         
-    verts_loc, faces, tex_faces, tnode, bnode = add_fairing(po['profile'])
+    verts_loc, faces, tex_faces, bnode, tnode = add_fairing(po['profile'])
     
     print('I made %i faces' % len(faces))
 
@@ -209,9 +209,9 @@ def execute(r):
     cfg_template = cfg_template.replace('<NODE_TOP_Y>', (tnode[2]+0.00022).__format__('0.6f'))
     cfg_template = cfg_template.replace('<NODE_TOP_Z>', (tnode[1]).__format__('0.6f'))
     
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-tnode[0]-0.000048).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (tnode[2]-0.00022).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (tnode[1]).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-bnode[0]-0.000048).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (bnode[2]-0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (bnode[1]).__format__('0.6f'))
     
     if po['capped']:
         cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '//')
