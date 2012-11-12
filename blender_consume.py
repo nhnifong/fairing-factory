@@ -102,7 +102,7 @@ def execute(r):
     
     po = json.loads(res.decode())
         
-    verts_loc, faces, tex_faces, bnode, tnode = add_fairing(po['profile'])
+    verts_loc, faces, tex_faces, tnode, bnode = add_fairing(po['profile'])
     
     print('I made %i faces' % len(faces))
 
@@ -147,7 +147,7 @@ def execute(r):
     
     # add the soldify modifier
     bpy.ops.object.modifier_add(type='SOLIDIFY')
-    bpy.data.objects[visible_mesh].modifiers['Solidify'].thickness = 0.04
+    bpy.data.objects[visible_mesh].modifiers['Solidify'].thickness = -0.04
     # apply it
     bpy.ops.object.modifier_apply(modifier='Solidify')
     # add an edge split modifier
@@ -206,17 +206,17 @@ def execute(r):
     # -X Z Y
     # the slight offsets help to control which way the fairing is ejected, but I don't totally understand it.
     cfg_template = cfg_template.replace('<NODE_TOP_X>', (-tnode[0]-0.000048).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_TOP_Y>', (tnode[2]+0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_TOP_Y>', (-tnode[2]-0.00022).__format__('0.6f'))
     cfg_template = cfg_template.replace('<NODE_TOP_Z>', (tnode[1]).__format__('0.6f'))
     
     cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-bnode[0]-0.000048).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (bnode[2]-0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (-bnode[2]+0.00022).__format__('0.6f'))
     cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (bnode[1]).__format__('0.6f'))
     
     if po['capped']:
-        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '//')
+        cfg_template = cfg_template.replace('<COMMENT>', '//')
     else:
-        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '')
+        cfg_template = cfg_template.replace('<COMMENT>', '')
         
     cfg_outpath = os.path.join( kits_dir, thiskit, part_dir, 'part.cfg' )
     fout = open(cfg_outpath, 'w')
