@@ -28,11 +28,11 @@ def add_fairing(profile):
         radius = row[1]
         ket = 13
         center = (avgradius, 0.0, 0.0)
-        # create a semicircle centered at (1,0,0) and 
+        # create a semicircle 
         for a,angle in enumerate([(j/(ket-1))*pi for j in range(ket)]):
-                point = (-sin(angle)*radius+1,
-                         cos(angle)*radius,
-                         height-mid)
+                point = (-sin(angle) * radius + center[0],
+                         cos(angle) * radius + center[1],
+                         height-mid + center[2])
                 if a==6:
                     if v==0:
                         bottomnode = point
@@ -216,7 +216,7 @@ def execute(r):
     if po['capped']:
         cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '//')
     else:
-        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', 's')
+        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '')
         
     cfg_outpath = os.path.join( kits_dir, thiskit, part_dir, 'part.cfg' )
     fout = open(cfg_outpath, 'w')
