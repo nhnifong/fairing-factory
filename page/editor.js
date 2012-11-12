@@ -272,7 +272,7 @@ function setup(){
 	                        "above": path[choice_point+1][0],
 	                        "below": path[choice_point-1][0],
 	                        "radmin": 0.0,
-	                        "radmax": 2.0
+	                        "radmax": 9990.0
 	                    };
                     }
                     mouse_status = "holding_point"
@@ -284,7 +284,7 @@ function setup(){
                         "above": path[choice_point+1][0],
                         "below": path[choice_point-1][0],
                         "radmin": 0.0,
-                        "radmax": 2.0
+                        "radmax": 9999.0
                     };
                     candidate_point = null
                     mouse_status = "holding_point"
