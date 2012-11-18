@@ -7,6 +7,9 @@ import redis
 import json
 import os
 import time
+from optparse import OptionParser
+
+conf = json.loads(open('config/develop.json').read())
 
 def add_fairing(profile):
     """
@@ -92,7 +95,7 @@ def add_fairing(profile):
 
 def execute(r):
     
-    res = r.brpop('part-orders')[1]
+    res = r.brpop(conf['redis-prefix']+':part-orders')[1]
 
     if not res: return
     
@@ -174,7 +177,7 @@ def execute(r):
     bpy.ops.object.transform_apply(scale=True)
     
     # retrieve kit tracker
-    rkey = 'kit-trackers:'+str(po['kitid'])
+    rkey = conf['redis-prefix']+':kit-trackers:'+str(po['kitid'])
     print("looking for "+rkey)
     ktrack = json.loads(r.get(rkey).decode())
     thiskit = ktrack['kitdir']
@@ -229,7 +232,7 @@ def execute(r):
         'partid': po['partid'],
         'partdir': po['partdir']
     }
-    r.lpush('part-receipts', json.dumps(receipt))
+    r.lpush(conf['redis-prefix']+':part-receipts', json.dumps(receipt))
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)

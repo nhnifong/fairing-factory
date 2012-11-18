@@ -99,7 +99,7 @@ function send_order(){
         "sections": sections
     });    console.log("I am about to POST this:\n\n" + orderjson);
     $.post(
-        "http://nathannifong.com:8008",
+        "http://nathannifong.com:8009",
         orderjson,
         function(data) {
             console.log("Response: " + data);
@@ -146,7 +146,7 @@ function setup(){
 	    	}, 1400);	
 		} else if (send_button_state == 'download'){
 			send_button_state = "send";
-			document.location = 'downloads/fairing_kit_'+kitid+'.zip';
+			document.location = 'dev-downloads/fairing_kit_'+kitid+'.zip';
 			$(this).css('background-color','rgb(255,255,255)');
 			$(this).css('color','rgb(212,95,0)');
 		    $(this).html('Send');

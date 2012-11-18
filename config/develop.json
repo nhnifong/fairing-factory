@@ -1,0 +1,6 @@
+{
+    "download-dir": "/var/www/FairingFactory/dev-downloads", 
+    "editor-dest": "/var/www/FairingFactory/alt-index.html", 
+    "redis-prefix": "develop", 
+    "serv-port": 8009
+}
