@@ -9,7 +9,7 @@ import os
 import time
 from optparse import OptionParser
 
-conf = json.loads(open('config/develop.json').read())
+conf = json.loads(open('config/production.json').read())
 
 def add_fairing(profile):
     """
