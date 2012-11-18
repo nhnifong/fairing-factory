@@ -1,4 +1,5 @@
 var selected_base = '2m';
+var selected_texture = 'whiterivet';
 
 var path = new Array();
 // height, radius
@@ -170,11 +171,30 @@ function setup(){
 		}
 	);
 	
+	$('.textogg').hover(
+		function(){
+			$(this).css('border-color','rgb(200,200,255)');
+		},
+		function(){
+			if ($(this).attr('id') == selected_texture){
+				$(this).css('border-color','rgb(255,245,120)')
+			} else {
+				$(this).css('border-color','rgb(100,100,100)');
+			}
+		}
+	);
+	
 	$('.togg').click(function(){
 		selected_base = $(this).attr('id');
 		$('.togg').css('background-color','rgb(255,255,255)');
 		$(this).css('background-color','rgb(255,245,120)')
 		newbasewidth(basewidth[selected_base]);
+	});
+	
+	$('.textogg').click(function(){
+		selected_texture = $(this).attr('id');
+		$('.textogg').css('border-color','rgb(100,100,100)');
+		$(this).css('border-color','rgb(255,245,120)')
 	});
 	
 	var zoomRepeater;
