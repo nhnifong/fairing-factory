@@ -2,6 +2,12 @@ import redis
 import json
 import os
 import shutil
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-c", "--conf", dest="conf", help="configuration json file")
+(options, args) = parser.parse_args()
+conf = json.loads(open(options.conf).read())
 
 # please run from fairing-factory directory
 
@@ -17,7 +23,7 @@ def partflags(n):
 
 # consume fairing kit orders
 while True:
-    b = r.brpop('fairing-kit-orders')
+    b = r.brpop(conf['redis-prefix']+':fairing-kit-orders')
     print repr(b)
     order = json.loads(b[1])
     kitid = order['kitid']
@@ -38,8 +44,8 @@ while True:
         'time-submitted':order['time-submitted'],
         'parts-finished':partflags(len(order['sections']))
         }
-    r.set('kit-trackers:'+str(kitid), json.dumps(kittracker))
-    r.expire('kit-trackers:'+str(kitid), 60*60*24*7)
+    r.set(conf['redis-prefix']+':kit-trackers:'+str(kitid), json.dumps(kittracker))
+    r.expire(conf['redis-prefix']+':kit-trackers:'+str(kitid), 60*60*24*7)
 
     for i,section in enumerate(order['sections']):
         # create a new part directory for each part inside the kit directory
@@ -67,4 +73,4 @@ while True:
             'texture': order['texture'],
             'capped': section['capped']
             }
-        r.lpush('part-orders', json.dumps(partorder))
+        r.lpush(conf['redis-prefix']+':part-orders', json.dumps(partorder))

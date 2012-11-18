@@ -2,7 +2,7 @@
     <head>
         <title>Faring Factory</title>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-        <script type="text/javascript" src="editor.js"></script>
+        <script type="text/javascript" src="alt-editor.js"></script>
         <style type="text/css">
 
 div.outer {
@@ -127,7 +127,7 @@ div.zoom_cont{
                         <li>Cut your fairing into sections by clicking in the orange cut area.</li>
                     </ol>
                     <br>
-                    You can delete a point or an edge you are holding by pressing x.
+                    To remove a point or cut line, first click on it, then press x
                 </small>
             </div>
             <canvas id="usp" width=800 height=800 tabindex=1></canvas>
@@ -144,7 +144,7 @@ div.zoom_cont{
                 When you are ready to submit the design, press send, and the factory will begin to <strike>choke on a bug</strike> process all the pieces in your fairing kit.
                 A download button will appear when it finishes.
                 
-                <div class="button" onClick="send_order()" id="sendbutton">Send</div>
+                <div class="button" id="sendbutton">Send</div>
                 <div class="zoom_cont">
                 	<big><b>Zoom</b></big><br>
                 	<div class="zoombutton" id="zoom_in" style="float: left;">-</div>

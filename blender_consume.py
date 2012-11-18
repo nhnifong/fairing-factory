@@ -7,6 +7,9 @@ import redis
 import json
 import os
 import time
+from optparse import OptionParser
+
+conf = json.loads(open('config/develop.json').read())
 
 def add_fairing(profile):
     """
@@ -21,17 +24,18 @@ def add_fairing(profile):
     topnode = None
     
     mid = (profile[0][0] + profile[-1][0]) / 2
+    avgradius = (profile[0][1] + profile[-1][1]) / 2
     
     for v,row in enumerate(profile):
         height = row[0]
         radius = row[1]
         ket = 13
-        center = (1.0, 0.0, 0.0)
-        # create a semicircle centered at (1,0,0) and 
+        center = (avgradius, 0.0, 0.0)
+        # create a semicircle 
         for a,angle in enumerate([(j/(ket-1))*pi for j in range(ket)]):
-                point = (-sin(angle)*radius+1,
-                         cos(angle)*radius,
-                         height-mid)
+                point = (-sin(angle) * radius + center[0],
+                         cos(angle) * radius + center[1],
+                         height-mid + center[2])
                 if a==6:
                     if v==0:
                         bottomnode = point
@@ -91,7 +95,7 @@ def add_fairing(profile):
 
 def execute(r):
     
-    res = r.brpop('part-orders')[1]
+    res = r.brpop(conf['redis-prefix']+':part-orders')[1]
 
     if not res: return
     
@@ -146,7 +150,7 @@ def execute(r):
     
     # add the soldify modifier
     bpy.ops.object.modifier_add(type='SOLIDIFY')
-    bpy.data.objects[visible_mesh].modifiers['Solidify'].thickness = 0.04
+    bpy.data.objects[visible_mesh].modifiers['Solidify'].thickness = -0.04
     # apply it
     bpy.ops.object.modifier_apply(modifier='Solidify')
     # add an edge split modifier
@@ -165,14 +169,15 @@ def execute(r):
     bpy.ops.mesh.primitive_cube_add()
     profile = po['profile']
     mid = abs(profile[0][0] - profile[-1][0]) / 2
+    avgradius = (profile[0][1] + profile[-1][1]) / 2
     print(mid)
     collider = "node_collider"
     bpy.context.selected_objects[0].name = collider
-    bpy.data.objects[collider].scale = [0.2,1,mid*0.9]
+    bpy.data.objects[collider].scale = [0.2,avgradius,mid*0.9]
     bpy.ops.object.transform_apply(scale=True)
     
     # retrieve kit tracker
-    rkey = 'kit-trackers:'+str(po['kitid'])
+    rkey = conf['redis-prefix']+':kit-trackers:'+str(po['kitid'])
     print("looking for "+rkey)
     ktrack = json.loads(r.get(rkey).decode())
     thiskit = ktrack['kitdir']
@@ -204,17 +209,17 @@ def execute(r):
     # -X Z Y
     # the slight offsets help to control which way the fairing is ejected, but I don't totally understand it.
     cfg_template = cfg_template.replace('<NODE_TOP_X>', (-tnode[0]-0.000048).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_TOP_Y>', (tnode[2]+0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_TOP_Y>', (-tnode[2]-0.00022).__format__('0.6f'))
     cfg_template = cfg_template.replace('<NODE_TOP_Z>', (tnode[1]).__format__('0.6f'))
     
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-tnode[0]-0.000048).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (tnode[2]-0.00022).__format__('0.6f'))
-    cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (tnode[1]).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_X>', (-bnode[0]-0.000048).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Y>', (-bnode[2]+0.00022).__format__('0.6f'))
+    cfg_template = cfg_template.replace('<NODE_BOTTOM_Z>', (bnode[1]).__format__('0.6f'))
     
     if po['capped']:
-        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', '//')
+        cfg_template = cfg_template.replace('<COMMENT>', '//')
     else:
-        cfg_template = cfg_template.replace('<NODE_TOP_COMMENT>', 's')
+        cfg_template = cfg_template.replace('<COMMENT>', '')
         
     cfg_outpath = os.path.join( kits_dir, thiskit, part_dir, 'part.cfg' )
     fout = open(cfg_outpath, 'w')
@@ -227,7 +232,7 @@ def execute(r):
         'partid': po['partid'],
         'partdir': po['partdir']
     }
-    r.lpush('part-receipts', json.dumps(receipt))
+    r.lpush(conf['redis-prefix']+':part-receipts', json.dumps(receipt))
 
 if __name__ == "__main__":
     rr = redis.StrictRedis(host='localhost', port=6379, db=0)

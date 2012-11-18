@@ -2,9 +2,18 @@ import BaseHTTPServer
 import json
 import redis
 import time
+from pprint import pprint
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-c", "--conf", dest="conf", help="configuration json file")
+(options, args) = parser.parse_args()
+conf = json.loads(open(options.conf).read())
+pprint(conf)
+
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
-    server_version= "FairingFactory/0.2"
+    server_version= "FairingFactory/0.3"
     def do_OPTIONS( self ):
         self.log_message( "Command: %s Path: %s Headers: %r"
                           % ( self.command, self.path, self.headers.items() ) )
@@ -76,20 +85,21 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
             return
 
         # get a new kitid
-        kitid = r.incr('kitid-tick')
+        kitid = r.incr(conf['redis-prefix']+':kitid-tick')
         time_submitted = time.time()
         
         order['kitid'] = kitid
         order['time-submitted'] = time_submitted
 
-        r.lpush( 'fairing-kit-orders', json.dumps(order) )
+        r.lpush( conf['redis-prefix']+':fairing-kit-orders', json.dumps(order) )
 
         self.sendPage("text/html","Thanks Bro\nkitid=%r\nTime submitted: %0.3f\n" % (kitid, time_submitted))
 
-def httpd(handler_class=MyHandler, server_address = ('', 8008), ):
+def httpd(handler_class=MyHandler):
+    server_address = ('', conf['serv-port'])
     srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
     while True:
         srvr.handle_request() # serve one request
 
 if __name__ == "__main__":
-    httpd( )
+    httpd()

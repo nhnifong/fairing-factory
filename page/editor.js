@@ -30,9 +30,6 @@ var point_bounds = {
     "radmax":-1
 };
 
-var candidate_point = null;
-
-var candidate_cut = null;
 
 var basewidth = {
 	'hm':0.5,
@@ -42,7 +39,12 @@ var basewidth = {
 	'5m':5.0,
 }
 
+var candidate_point = null;
+var candidate_cut = null;
 var zoom = 180.0;
+var send_button_state = 'send';
+var kitid = null;
+var zoomrate = 0.008;
 
 function send_order(){
     sections = new Array();
@@ -95,34 +97,15 @@ function send_order(){
         "texture":"whiterivet",
         "base-size":selected_base,
         "sections": sections
-    });
-    var kitid;
-    console.log("I am about to POST this:\n\n" + orderjson);
+    });    console.log("I am about to POST this:\n\n" + orderjson);
     $.post(
-        "http://nathannifong.com:8008",
+        "http://nathannifong.com:8009",
         orderjson,
         function(data) {
             console.log("Response: " + data);
             kitid = data.split('\n')[1].split('=')[1];
-            console.log(kitid);
         }
     );
-    
-    $('#sendbutton').css('background-color', 'rgb(240,240,240)');
-    $('#sendbutton').css('color', 'rgb(90,90,90)');
-    $('#sendbutton').css('font-size', '10pt');
-    $('#sendbutton').css('border', 'none');
-    $('#sendbutton').html('processing...');
-    
-    setTimeout(function() {   //calls click event after a certain time
-   		$('#sendbutton').css('background-color', 'rgb(255,255,255)');
-    	$('#sendbutton').css('color', 'rgb(110,80,240)');
-    	$('#sendbutton').css('font-size', '18pt');
-    	$('#sendbutton').css('border', '2px rgb(100,100,100) solid');
-    	$('#sendbutton').html('<a href="downloads/fairing_kit_'+kitid+'.zip">Download</a>');
-	}, 1000);
-	
-	
     
 }
 
@@ -132,6 +115,45 @@ function newbasewidth(sizeinmeters){
 }
 
 function setup(){
+
+	$('#sendbutton').hover(function(){
+		if (send_button_state == 'send' || send_button_state == 'download'){
+			$(this).css('background-color','rgb(200,200,255)');
+		}
+	},
+	function(){
+		if (send_button_state == 'send' || send_button_state == 'download'){
+			$(this).css('background-color','rgb(255,255,255)');
+		}
+	});
+	
+	$('#sendbutton').click(function(){
+		if (send_button_state == 'send'){
+			send_order();
+			$(this).css('background-color', 'rgb(240,240,240)');
+			$(this).css('color', 'rgb(90,90,90)');
+			$(this).css('font-size', '10pt');
+			$(this).css('border', 'none');
+			$(this).html('processing...');
+			send_button_state = "disabled";
+			setTimeout(function() {
+				send_button_state = "download";
+		   		$('#sendbutton').css('background-color', 'rgb(255,255,255)');
+		    	$('#sendbutton').css('color', 'rgb(110,80,240)');
+		    	$('#sendbutton').css('font-size', '18pt');
+		    	$('#sendbutton').css('border', '2px rgb(100,100,100) solid');
+		    	$('#sendbutton').html('Download');
+	    	}, 1400);	
+		} else if (send_button_state == 'download'){
+			send_button_state = "send";
+			document.location = 'dev-downloads/fairing_kit_'+kitid+'.zip';
+			$(this).css('background-color','rgb(255,255,255)');
+			$(this).css('color','rgb(212,95,0)');
+		    $(this).html('Send');
+			
+		}
+		console.log("send_button_state "+send_button_state);
+	});
 
 	$('#2m').css('background-color','rgb(255,245,120)');
 
@@ -159,7 +181,7 @@ function setup(){
 	
 	$('#zoom_in').mousedown(function(){
 		zoomRepeater = setInterval(function(){
-			zoom *= 0.995;
+			zoom *= (1-zoomrate);
 			draw(-1,-1);
 		},50);
 	});
@@ -169,7 +191,7 @@ function setup(){
 	
 	$('#zoom_out').mousedown(function(){
 		zoomRepeater = setInterval(function(){
-			zoom *= 1.005;
+			zoom *= (1+zoomrate);
 			draw(-1,-1);
 		},50);
 	});
@@ -250,7 +272,7 @@ function setup(){
 	                        "above": path[choice_point+1][0],
 	                        "below": path[choice_point-1][0],
 	                        "radmin": 0.0,
-	                        "radmax": 2.0
+	                        "radmax": 9990.0
 	                    };
                     }
                     mouse_status = "holding_point"
@@ -262,7 +284,7 @@ function setup(){
                         "above": path[choice_point+1][0],
                         "below": path[choice_point-1][0],
                         "radmin": 0.0,
-                        "radmax": 2.0
+                        "radmax": 9999.0
                     };
                     candidate_point = null
                     mouse_status = "holding_point"
