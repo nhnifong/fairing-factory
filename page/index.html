@@ -84,6 +84,17 @@ div.togg{
 	margin-left:60px;
 }
 
+div.textogg{
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	width:90px; 
+	height:90px;
+	padding:0px;
+	border:2px rgb(100,100,100) solid;
+	margin:0px;
+	margin-left: 10px
+}
+
 div.zoombutton{
     font-size: 18pt;
 	-moz-border-radius: 5px;
@@ -106,8 +117,11 @@ div.zoombutton:hover{
 	text-decoration:none;
 }
 
+div.snap_cont{
+	margin-top: 110px;
+}
 div.zoom_cont{
-	margin-top: 200px;
+	margin-top: 10px;
 }
 
         </style>
@@ -134,17 +148,28 @@ div.zoom_cont{
             <div class="right">
             	<div>
             		<h3>Base diameter</h3>
-            		<div class="togg" id='hm'>1/2 m</div>
-            		<div class="togg" id='1m'>1 m</div>
-            		<div class="togg" id='2m'>2 m</div>
-            		<div class="togg" id='3m'>3 m</div>
-            		<div class="togg" id='5m'>5 m</div>
+            		<div class="togg" id="hm">1/2 m</div>
+            		<div class="togg" id="1m">1 m</div>
+            		<div class="togg" id="2m">2 m</div>
+            		<div class="togg" id="3m">3 m</div>
+            		<div class="togg" id="5m">5 m</div>
+            	</div>
+                <br>
+            	<div>
+            		<h3>Texture</h3>
+            		<div class="textogg" id="whiterivet" style="float: left; background-image: url('images/whiterivet_90x90.png'); border-color: rgb(255,245,120);"></div>
+            		<div class="textogg" id="army" style="float: left; background-image: url('images/army_90x90.png');"></div>
+            		<div class="clear"></div>
             	</div>
                 <br>
                 When you are ready to submit the design, press send, and the factory will begin to <strike>choke on a bug</strike> process all the pieces in your fairing kit.
                 A download button will appear when it finishes.
                 
                 <div class="button" id="sendbutton">Send</div>
+                <div class="snap_cont">
+                	<big><b>Snap to 0.05m increments</b></big>
+                	<input type="checkbox" onchange="snap=this.checked;" />
+                </div>
                 <div class="zoom_cont">
                 	<big><b>Zoom</b></big><br>
                 	<div class="zoombutton" id="zoom_in" style="float: left;">-</div>

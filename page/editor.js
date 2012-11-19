@@ -1,4 +1,5 @@
 var selected_base = '2m';
+var selected_texture = 'whiterivet';
 
 var path = new Array();
 // height, radius
@@ -45,6 +46,7 @@ var zoom = 180.0;
 var send_button_state = 'send';
 var kitid = null;
 var zoomrate = 0.008;
+var snap = false;
 
 function send_order(){
     sections = new Array();
@@ -94,7 +96,7 @@ function send_order(){
     }
 
     var orderjson = JSON.stringify({
-        "texture":"whiterivet",
+        "texture":selected_texture,
         "base-size":selected_base,
         "sections": sections
     });    console.log("I am about to POST this:\n\n" + orderjson);
@@ -170,11 +172,30 @@ function setup(){
 		}
 	);
 	
+	$('.textogg').hover(
+		function(){
+			$(this).css('border-color','rgb(200,200,255)');
+		},
+		function(){
+			if ($(this).attr('id') == selected_texture){
+				$(this).css('border-color','rgb(255,245,120)')
+			} else {
+				$(this).css('border-color','rgb(100,100,100)');
+			}
+		}
+	);
+	
 	$('.togg').click(function(){
 		selected_base = $(this).attr('id');
 		$('.togg').css('background-color','rgb(255,255,255)');
 		$(this).css('background-color','rgb(255,245,120)')
 		newbasewidth(basewidth[selected_base]);
+	});
+	
+	$('.textogg').click(function(){
+		selected_texture = $(this).attr('id');
+		$('.textogg').css('border-color','rgb(100,100,100)');
+		$(this).css('border-color','rgb(255,245,120)')
 	});
 	
 	var zoomRepeater;
@@ -422,6 +443,12 @@ function move_held_point(mouseX,mouseY){
         var margin = 0.01;
         var tgt = cvco_to_fco(mouseX, mouseY);
         tgt['rad'] = Math.abs(tgt['rad']);
+        
+        if(snap){
+        	tgt['rad'] = Math.round(tgt['rad']*20)/20;
+        	tgt['height'] = Math.round(tgt['height']*20)/20;
+        }
+        
         if (choice_point == path.length-1){
         	if (tgt['height'] > point_bounds['below'] + margin){
 	            path[choice_point][0] = tgt['height'];
