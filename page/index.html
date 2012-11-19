@@ -117,8 +117,11 @@ div.zoombutton:hover{
 	text-decoration:none;
 }
 
+div.snap_cont{
+	margin-top: 110px;
+}
 div.zoom_cont{
-	margin-top: 200px;
+	margin-top: 10px;
 }
 
         </style>
@@ -155,7 +158,7 @@ div.zoom_cont{
             	<div>
             		<h3>Texture</h3>
             		<div class="textogg" id="whiterivet" style="float: left; background-image: url('images/whiterivet_90x90.png'); border-color: rgb(255,245,120);"></div>
-            		<div class="textogg" id="nasa" style="float: left; background-image: url('images/nasa_90x90.png');"></div>
+            		<div class="textogg" id="stars" style="float: left; background-image: url('images/stars_90x90.png');"></div>
             		<div class="clear"></div>
             	</div>
                 <br>
@@ -163,6 +166,10 @@ div.zoom_cont{
                 A download button will appear when it finishes.
                 
                 <div class="button" id="sendbutton">Send</div>
+                <div class="snap_cont">
+                	<big><b>Snap to 0.05m increments</b></big>
+                	<input type="checkbox" onchange="snap=this.checked;" />
+                </div>
                 <div class="zoom_cont">
                 	<big><b>Zoom</b></big><br>
                 	<div class="zoombutton" id="zoom_in" style="float: left;">-</div>

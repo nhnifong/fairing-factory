@@ -46,6 +46,7 @@ var zoom = 180.0;
 var send_button_state = 'send';
 var kitid = null;
 var zoomrate = 0.008;
+var snap = false;
 
 function send_order(){
     sections = new Array();
@@ -95,7 +96,7 @@ function send_order(){
     }
 
     var orderjson = JSON.stringify({
-        "texture":"whiterivet",
+        "texture":selected_texture,
         "base-size":selected_base,
         "sections": sections
     });    console.log("I am about to POST this:\n\n" + orderjson);
@@ -442,6 +443,12 @@ function move_held_point(mouseX,mouseY){
         var margin = 0.01;
         var tgt = cvco_to_fco(mouseX, mouseY);
         tgt['rad'] = Math.abs(tgt['rad']);
+        
+        if(snap){
+        	tgt['rad'] = Math.round(tgt['rad']*20)/20;
+        	tgt['height'] = Math.round(tgt['height']*20)/20;
+        }
+        
         if (choice_point == path.length-1){
         	if (tgt['height'] > point_bounds['below'] + margin){
 	            path[choice_point][0] = tgt['height'];
