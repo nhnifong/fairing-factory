@@ -170,11 +170,12 @@ def execute(r):
     profile = po['profile']
     mid = abs(profile[0][0] - profile[-1][0]) / 2
     avgradius = (profile[0][1] + profile[-1][1]) / 2
+    maxradius = max([pz[1] for pz in po['profile']])
     print(mid)
     collider = "node_collider"
     bpy.context.selected_objects[0].name = collider
-    bpy.data.objects[collider].scale = [0.05, avgradius*0.5 ,mid*0.9]
-    bpy.data.objects[collider].location = [max(po['profile'])+0.025, 0,0]
+    bpy.data.objects[collider].scale = [0.1, avgradius*0.5 ,mid*0.9]
+    bpy.data.objects[collider].location = [avgradius-maxradius-0.05, 0,0]
     bpy.ops.object.transform_apply(scale=True, location=True)
     
     # retrieve kit tracker
