@@ -11,7 +11,7 @@ from optparse import OptionParser
 
 conf = json.loads(open('config/develop.json').read())
 
-def add_fairing(profile):
+def add_fairing(profile, symmetry):
     """
     This function takes inputs and returns vertex and face arrays.
     no actual mesh data creation is done here.
@@ -26,13 +26,22 @@ def add_fairing(profile):
     mid = (profile[0][0] + profile[-1][0]) / 2
     avgradius = (profile[0][1] + profile[-1][1]) / 2
     
+    #symmetry = 4
+    points_around = 24
+    ket = points_around//symmetry+1 # number of edges on the semicircle
+
+    ang_list = {
+        2: range(13),
+        4: range(3,10)
+    }
+
     for v,row in enumerate(profile):
         height = row[0]
         radius = row[1]
-        ket = 13
         center = (avgradius, 0.0, 0.0)
         # create a semicircle 
-        for a,angle in enumerate([(j/(ket-1))*pi for j in range(ket)]):
+        angles = [(j/12)*pi for j in ang_list[symmetry]]
+        for a,angle in enumerate(angles):
                 point = (-sin(angle) * radius + center[0],
                          cos(angle) * radius + center[1],
                          height-mid + center[2])
@@ -48,7 +57,7 @@ def add_fairing(profile):
     tex_faces = []
 
     for t in range(len(profile)-1):
-        for i in range(12):
+        for i in range(ket-1):
             quad = [
                 i+1+ket*t,
                 i+ket*t,
@@ -105,7 +114,7 @@ def execute(r):
     
     po = json.loads(res.decode())
         
-    verts_loc, faces, tex_faces, tnode, bnode = add_fairing(po['profile'])
+    verts_loc, faces, tex_faces, tnode, bnode = add_fairing(po['profile'], po['symmetry'])
     
     print('I made %i faces' % len(faces))
 
@@ -174,8 +183,8 @@ def execute(r):
     print(mid)
     collider = "node_collider"
     bpy.context.selected_objects[0].name = collider
-    bpy.data.objects[collider].scale = [0.1, avgradius*0.5 ,mid*0.9]
-    bpy.data.objects[collider].location = [avgradius-maxradius-0.05, 0,0]
+    bpy.data.objects[collider].scale = [0.2, avgradius*0.5 ,mid*0.9]
+    bpy.data.objects[collider].location = [avgradius-maxradius-0.1, 0,0]
     bpy.ops.object.transform_apply(scale=True, location=True)
     
     # retrieve kit tracker

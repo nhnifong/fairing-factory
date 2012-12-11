@@ -1,4 +1,5 @@
 ### Definitions of json objects stored in redis
+# note, this was written by hand and is probably not valid json. it's just a guide
 
 #### fairing-kit-orders
     {
@@ -17,7 +18,8 @@
                 'capped': false # does this part form a cap (should it have connections nodes on top?
             },
             ... # up to 12 sections.
-        ]
+        ],
+	'symmetry': 2 #2 or 4, but later 2,3,4,6,8
     }
 
 the json object clients post to the API look just like the above without the kitid and time-submitted keys
@@ -30,6 +32,7 @@ the json object clients post to the API look just like the above without the kit
         'profile': [...] # follows the same format as the profile key in a fairing-kit-order
 	'texture': 'whiterivet' # same as above
         'capped': false # follows the same fomat as the capped key in a fairing-kit-order
+	'symmetry': 2 # same as above
     }
 
 #### part-receipts

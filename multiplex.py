@@ -33,7 +33,10 @@ while True:
     os.mkdir(os.path.join(kits_data,kitdir))
     
     # copy in the appropriate base part
-    basepart = '_'.join(['ffkits', order['base-size'], order['texture']])
+    if order['symmetry'] == 2: #backwards compatability
+        basepart = '_'.join(['ffkits', order['base-size'], order['texture'])
+    else:
+        basepart = '_'.join(['ffkits', order['base-size'], order['texture'], order['symmetry']])
     base_part_path = os.path.join(bases,basepart)
     shutil.copytree(base_part_path, os.path.join(kits_data,kitdir,basepart))
     
@@ -71,6 +74,7 @@ while True:
             'partdir': partdir,
             'profile': section['profile'],
             'texture': order['texture'],
-            'capped': section['capped']
+            'capped': section['capped'],
+            'symmetry': order['symmetry']
             }
         r.lpush(conf['redis-prefix']+':part-orders', json.dumps(partorder))
