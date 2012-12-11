@@ -118,7 +118,7 @@ div.zoombutton:hover{
 }
 
 div.snap_cont{
-	margin-top: 110px;
+	margin-top: 10px;
 }
 div.zoom_cont{
 	margin-top: 10px;
@@ -166,7 +166,15 @@ div.zoom_cont{
                 A download button will appear when it finishes.
                 
                 <div class="button" id="sendbutton">Send</div>
-                <div class="snap_cont">
+		<div class="snap_cont">
+                	<big><b>Show Picture</b></big>
+                	<input type="checkbox" onchange="showPicture=this.checked;draw(-1,-1)" />
+                </div>
+		<div class="snap_cont">
+                	<big><b>Show Measures</b></big>
+                	<input type="checkbox" onchange="showMeasures=this.checked;draw(-1,-1)" />
+                </div>
+		<div class="snap_cont">
                 	<big><b>Snap to 0.05m increments</b></big>
                 	<input type="checkbox" onchange="snap=this.checked;" />
                 </div>

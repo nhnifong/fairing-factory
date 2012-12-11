@@ -47,6 +47,15 @@ var send_button_state = 'send';
 var kitid = null;
 var zoomrate = 0.008;
 var snap = false;
+var showMeasures = false
+
+var refimage = new Image();
+var showPicture = false;
+refimage.onload = function() {
+    //enable show ref tickbox
+    };
+// image begins to load when this is set
+refimage.src = 'images/refm.png';
 
 function send_order(){
     sections = new Array();
@@ -518,13 +527,23 @@ function draw(mouseX,mouseY){
         ctx.fillStyle = "rgb(180,180,180)";
         ctx.fillRect (0, 0, 800, 800);
         
-        // light 1m 2m 3m lines
-        labelVertGuide(ctx, 0, '0m');
-        for (var meters=1; meters<60; meters++){
+	if (showPicture){
+	    var img_nw = 224 * (zoom/80);
+	    // native 224 201
+	    // zoom is conveniently in units of pixels per meter
+	    // this image is 80 pixels per meter
+	    ctx.drawImage(refimage, 390-(img_nw/2), 800-(281*(zoom/80)), img_nw, img_nw * refimage.height / refimage.width);
+	}
+
+	if (showMeasures){
+	    // light 1m 2m 3m lines
+	    labelVertGuide(ctx, 0, '0m');
+	    for (var meters=1; meters<60; meters++){
         	labelVertGuide(ctx, -meters, meters+'m');
         	labelVertGuide(ctx, meters, meters+'m');
 		labelHoriGuide(ctx, meters, meters+'m')
-        }
+	    }
+	}
 
         // fairing profile line segments
         for (var mu=1; mu>=-1; mu-=2){
