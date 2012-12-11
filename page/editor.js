@@ -47,6 +47,15 @@ var send_button_state = 'send';
 var kitid = null;
 var zoomrate = 0.008;
 var snap = false;
+var showMeasures = false
+
+var refimage = new Image();
+var showPicture = false;
+refimage.onload = function() {
+    //enable show ref tickbox
+    };
+// image begins to load when this is set
+refimage.src = 'images/refm.png';
 
 function send_order(){
     sections = new Array();
@@ -494,6 +503,19 @@ function labelVertGuide(ctx, rad, str){
     ctx.stroke();
     ctx.fillText(str, x+1.5, 10);
 }
+
+function labelHoriGuide(ctx, hi, str){
+    ctx.strokeStyle = "rgb(250,250,250)";
+    ctx.font = 'italic 12px Calibri';
+    ctx.fillStyle = "rgb(220,220,200)";
+    ctx.beginPath();
+    ptg = fco_to_cvco(0,hi)
+    y = ptg.y + 0.5
+    ctx.moveTo(0, y);
+    ctx.lineTo(800, y);
+    ctx.stroke();
+    ctx.fillText(str, 800-19.5, y+10);
+}
         
 function draw(mouseX,mouseY){
     var canvas = document.getElementById("usp");
@@ -505,20 +527,23 @@ function draw(mouseX,mouseY){
         ctx.fillStyle = "rgb(180,180,180)";
         ctx.fillRect (0, 0, 800, 800);
         
-        ctx.fillStyle = "rgb(212,95,0)";
-        ctx.fillRect (0, 0, 20, 800);
-        ctx.strokeStyle = "rgb(0,0,0)";
-        ctx.beginPath();
-        ctx.moveTo(20, 0);
-        ctx.lineTo(20, 800);
-        ctx.stroke();
+	if (showPicture){
+	    var img_nw = 224 * (zoom/80);
+	    // native 224 201
+	    // zoom is conveniently in units of pixels per meter
+	    // this image is 80 pixels per meter
+	    ctx.drawImage(refimage, 390-(img_nw/2), 800-(281*(zoom/80)), img_nw, img_nw * refimage.height / refimage.width);
+	}
 
-        // light 1m 2m 3m lines
-        labelVertGuide(ctx, 0, '0m');
-        for (var meters=1; meters<10; meters++){
+	if (showMeasures){
+	    // light 1m 2m 3m lines
+	    labelVertGuide(ctx, 0, '0m');
+	    for (var meters=1; meters<60; meters++){
         	labelVertGuide(ctx, -meters, meters+'m');
         	labelVertGuide(ctx, meters, meters+'m');
-        }
+		labelHoriGuide(ctx, meters, meters+'m')
+	    }
+	}
 
         // fairing profile line segments
         for (var mu=1; mu>=-1; mu-=2){
@@ -544,6 +569,16 @@ function draw(mouseX,mouseY){
             ctx.strokeStyle = "rgb(0, 0, 0)";
             ctx.stroke();
         }
+
+	// orange section
+	ctx.fillStyle = "rgb(212,95,0)";
+        ctx.fillRect (0, 0, 20, 800);
+        ctx.strokeStyle = "rgb(0,0,0)";
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(20, 800);
+        ctx.stroke();
+
 
         // existing cuts
         for(var i=0; i<cuts.length-1; i++){
