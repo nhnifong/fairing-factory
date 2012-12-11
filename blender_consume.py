@@ -173,8 +173,9 @@ def execute(r):
     print(mid)
     collider = "node_collider"
     bpy.context.selected_objects[0].name = collider
-    bpy.data.objects[collider].scale = [0.2,avgradius,mid*0.9]
-    bpy.ops.object.transform_apply(scale=True)
+    bpy.data.objects[collider].scale = [0.05, avgradius*0.5 ,mid*0.9]
+    bpy.data.objects[collider].location = [max(po['profile'])+0.025, 0,0]
+    bpy.ops.object.transform_apply(scale=True, location=True)
     
     # retrieve kit tracker
     rkey = conf['redis-prefix']+':kit-trackers:'+str(po['kitid'])
