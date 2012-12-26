@@ -4,6 +4,7 @@ import redis
 import time
 from pprint import pprint
 from optparse import OptionParser
+import sys
 
 parser = OptionParser()
 parser.add_option("-c", "--conf", dest="conf", help="configuration json file")
@@ -99,7 +100,12 @@ def httpd(handler_class=MyHandler):
     server_address = ('', conf['serv-port'])
     srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
     while True:
-        srvr.handle_request() # serve one request
+        try:
+            srvr.handle_request() # serve one request
+        except Exception as e:
+            print str(e)
+            if type(e) == KeyboardInterrupt:
+                sys.exit(0)
 
 if __name__ == "__main__":
     httpd()

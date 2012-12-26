@@ -1,6 +1,7 @@
 How to Deploy
 =============
 
+cd into ~/git-deploy/fairing-factory
 merge develop into master
 push master
 cd into the deployment directory
