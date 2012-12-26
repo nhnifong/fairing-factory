@@ -36,6 +36,9 @@ while True:
     basepart = '_'.join(['ffkits', order['base-size'], order['texture']])
     base_part_path = os.path.join(bases,basepart)
     shutil.copytree(base_part_path, os.path.join(kits_data,kitdir,basepart))
+
+    # copy in the FairingLink.dll plugin
+    shutil.copy('FairingLink.dll',os.path.join(kits_data, kitdir, 'FairingLink.dll'))
     
     # create a kit tracker
     kittracker = {
@@ -63,6 +66,9 @@ while True:
         otexdir = 'textures'
         otexfile = os.path.join(otexdir, order['texture']+'.png')
         shutil.copy(otexfile, texdir)
+
+        # copy the plugin in 
+        shutil.copy('FairingLink.dll',kitdir)
 
         # create the part order
         partorder = {
