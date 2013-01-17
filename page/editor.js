@@ -37,7 +37,7 @@ var basewidth = {
 	'1m':1.0,
 	'2m':2.0,
 	'3m':3.0,
-	'5m':5.0,
+	'5m':5.0
 }
 
 var candidate_point = null;
@@ -157,7 +157,7 @@ function setup(){
 	    	}, 1400);	
 		} else if (send_button_state == 'download'){
 			send_button_state = "send";
-			document.location = 'dev_downloads/fairing_kit_'+kitid+'.zip';
+			document.location = 'dev-downloads/fairing_kit_'+kitid+'.zip';
 			$(this).css('background-color','rgb(255,255,255)');
 			$(this).css('color','rgb(212,95,0)');
 		    $(this).html('Send');
