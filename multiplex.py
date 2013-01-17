@@ -67,9 +67,6 @@ while True:
         otexfile = os.path.join(otexdir, order['texture']+'.png')
         shutil.copy(otexfile, texdir)
 
-        # copy the plugin in 
-        shutil.copy('FairingLink.dll',kitdir)
-
         # create the part order
         partorder = {
             'kitid': kitid,
