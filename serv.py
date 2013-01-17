@@ -66,7 +66,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
             assert texture in ['whiterivet','stars','army']
             secp = order['sections']
             assert type(secp) == list
-            assert 0 < len(secp) < 13
+            assert 0 < len(secp) < 1000
             for sec in secp:
                 assert type(sec) == dict
                 capped = sec['capped']
