@@ -3,9 +3,6 @@ How to Deploy
 
 cd into ~/git-deploy/fairing-factory
 merge develop into master
-push master
-cd into the deployment directory
-pull master
 in index.html, change alt-editor.js to editor.js
 in editor.js change port 8009 to 8008
 in editor.js change dev-downloads to downloads

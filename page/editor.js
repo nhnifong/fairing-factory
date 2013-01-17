@@ -37,7 +37,7 @@ var basewidth = {
 	'1m':1.0,
 	'2m':2.0,
 	'3m':3.0,
-	'5m':5.0,
+	'5m':5.0
 }
 
 var candidate_point = null;

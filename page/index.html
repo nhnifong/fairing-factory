@@ -14,7 +14,7 @@ div.outer {
 
 body {
     font-family: "Arial", Helvetica, sans-serif;
-    font-size: 18pt;
+    font-size: 17pt;
 }
         
 canvas {
@@ -92,7 +92,8 @@ div.textogg{
 	padding:0px;
 	border:2px rgb(100,100,100) solid;
 	margin:0px;
-	margin-left: 10px
+	margin-left: 10px;
+	margin-bottom: 10px;
 }
 
 div.zoombutton{
@@ -123,6 +124,10 @@ div.snap_cont{
 div.zoom_cont{
 	margin-top: 10px;
 }
+h3{
+        margin-top: 4px;
+        margin-bottom: 4px;
+}
 
         </style>
     </head>
@@ -131,22 +136,24 @@ div.zoom_cont{
             <div class="left">
                 <b>Fairing<br>Factory</b><br>
                 <br>
-                <br>
                 <small>
                     <ol>
-                        <li>Select a base size.</li>
+                        <li>Select a base size and a texture</li>
                         <br>
                         <li>Place points along the outline of your fairing by clicking inside the editor area.</li>
                         <br>
                         <li>Cut your fairing into sections by clicking in the orange cut area.</li>
+			<br>
+			<li>Press send</li>
                     </ol>
-                    <br>
                     To remove a point or cut line, first click on it, then press x
 		    <br>
 		    <br>
 		    <small>
-		    <b>New FairingLink module by JDP connects fairings with invisible struts!</b>
+		    <b>New FairingLink module by JDP connects fairings with invisible struts! <small>(place the included dll in your plugins folder)</small></b>
 		    </small>
+		    <br><br>
+		    <a href="http://forum.kerbalspaceprogram.com/showthread.php/28405-Fairing-Factory-1-2-New-FairingLink-plugin"><small>More information is available at the forum thread</small></a>
                 </small>
             </div>
             <canvas id="usp" width=800 height=800 tabindex=1></canvas>
@@ -165,11 +172,11 @@ div.zoom_cont{
             		<div class="textogg" id="whiterivet" style="float: left; background-image: url('images/whiterivet_90x90.png'); border-color: rgb(255,245,120);"></div>
             		<div class="textogg" id="army" style="float: left; background-image: url('images/army_90x90.png');"></div>
             		<div class="clear"></div>
-            	</div>
-                <br>
-                When you are ready to submit the design, press send, and the factory will begin to <strike>choke on a bug</strike> process all the pieces in your fairing kit.
-                A download button will appear when it finishes.
-                
+			<div class="textogg" id="blackstripe" style="float: left; background-image: url('images/blackstripe_90x90.png');"></div>
+			<div class="textogg" id="heatshield" style="float: left; background-image: url('images/heatshield_90x90.png');"></div>
+            		<div class="clear"></div>
+		</div>
+                                
                 <div class="button" id="sendbutton">Send</div>
 		<div class="snap_cont">
                 	<big><b>Show Picture</b></big>
