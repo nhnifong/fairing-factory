@@ -63,7 +63,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
             base_size = order['base-size']
             assert base_size in ['hm','1m','2m','3m','4m','5m']
             texture = order['texture']
-            assert texture in ['whiterivet','stars','army']
+            assert texture in ['whiterivet','stars','army','blackstripe','heatshield']
             secp = order['sections']
             assert type(secp) == list
             assert 0 < len(secp) < 1000
