@@ -1,4 +1,5 @@
 import BaseHTTPServer
+import SocketServer
 import json
 import redis
 import time
@@ -96,16 +97,20 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 
         self.sendPage("text/html","Thanks Bro\nkitid=%r\nTime submitted: %0.3f\n" % (kitid, time_submitted))
 
+
+class ForkingHTTPServer(SocketServer.ForkingMixIn, BaseHTTPServer.HTTPServer):
+    def finish_request(self, request, client_address):
+        request.settimeout(30)
+        BaseHTTPServer.HTTPServer.finish_request(self, request, client_address)
+
 def httpd(handler_class=MyHandler):
     server_address = ('', conf['serv-port'])
-    srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
-    while True:
-        try:
-            srvr.handle_request() # serve one request
-        except Exception as e:
-            print str(e)
-            if type(e) == KeyboardInterrupt:
-                sys.exit(0)
+    try:
+        print "Server started"
+        srvr = ForkingHTTPServer(server_address, handler_class)
+        srvr.serve_forever()  # serve_forever
+    except KeyboardInterrupt:
+        srvr.socket.close()
 
 if __name__ == "__main__":
     httpd()
